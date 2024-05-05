@@ -13,7 +13,8 @@ export default {
         return {
             camera: null,
             renderer: null,
-            controls: null
+            controls: null,
+            earthRadius: 1 // Radius of the Earth model
         };
     },
     mounted() {
@@ -28,12 +29,19 @@ export default {
                 italianRadioStations.forEach(station => {
                     const longitude = station.geo_long;
                     const latitude = station.geo_lat;
-                    this.addMarker(longitude, latitude, 0.01);
+                    this.addMarker(longitude, latitude, 0.01); // Adjust marker size as needed
                 });
             })
             .catch(error => {
                 console.error('Error fetching radio station data:', error);
             });
+
+        // Listen for window resize event
+        window.addEventListener('resize', this.handleWindowResize);
+    },
+    beforeUnmount() { // Replace beforeDestroy with beforeUnmount
+        // Remove the window resize event listener when component is destroyed
+        window.removeEventListener('resize', this.handleWindowResize);
     },
     methods: {
         init() {
@@ -53,18 +61,18 @@ export default {
             // Create a scene
             const scene = new THREE.Scene();
 
-            // Create a sphere (world)
-            const geometry = new THREE.SphereGeometry(1, 32, 32);
+            // Create a more accurate Earth model
+            const geometry = new THREE.SphereGeometry(this.earthRadius, 64, 64); // Increase segments for smoother surface
             const texture = new THREE.TextureLoader().load(earthTexture);
             const material = new THREE.MeshPhongMaterial({ map: texture });
             const earth = new THREE.Mesh(geometry, material);
             scene.add(earth);
 
-            // Add an ambient light
+            // Add ambient light
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
             scene.add(ambientLight);
 
-            // Add a directional light
+            // Add directional light
             const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
             directionalLight.position.set(1, 1, 1).normalize();
             scene.add(directionalLight);
@@ -73,22 +81,32 @@ export default {
             this.scene = scene;
         },
         addMarker(longitude, latitude, markerSize = 0.05) {
-            // Create a marker
-            const geometry = new THREE.SphereGeometry(markerSize, 32, 32);
-            const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-            const marker = new THREE.Mesh(geometry, material);
+            // Only proceed if longitude and latitude are not null
+            if (longitude !== null && latitude !== null) {
+                // Create a marker
+                const geometry = new THREE.SphereGeometry(markerSize, 32, 32);
+                const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                const marker = new THREE.Mesh(geometry, material);
 
-            // Convert latitude and longitude from degrees to radians
-            const phi = THREE.Math.degToRad(90 - latitude); // Convert latitude to polar angle
-            const theta = THREE.Math.degToRad(longitude + 338); // Adjust longitude to proper range and convert
+                const preciseLatitude = parseFloat(latitude.toFixed(6));
+                const preciseLongitude = parseFloat(longitude.toFixed(6));
 
-            // Convert spherical coordinates to Cartesian coordinates for the marker
-            marker.position.x = Math.sin(phi) * Math.cos(theta);
-            marker.position.y = Math.cos(phi);
-            marker.position.z = Math.sin(phi) * Math.sin(theta);
+                // Convert latitude and longitude to radians
+                const latRad = preciseLatitude * Math.PI / 180;
+                const lonRad = preciseLongitude * Math.PI / 180;
 
-            // Add the marker to the scene
-            this.scene.add(marker);
+                // Use the Haversine formula to calculate the x, y, and z coordinates
+                const x = this.earthRadius * Math.cos(latRad) * Math.cos(lonRad);
+                const y = this.earthRadius * Math.cos(latRad) * Math.sin(lonRad);
+                const z = this.earthRadius * Math.sin(latRad);
+
+                marker.position.set(x, y, z);
+
+                // Add the marker to the scene
+                this.scene.add(marker);
+            } else {
+                console.error('Longitude or latitude is null');
+            }
         },
         animate() {
             requestAnimationFrame(this.animate);
@@ -103,6 +121,13 @@ export default {
                 this.renderer.render(this.scene, this.camera);
             }
         },
-    },
+        handleWindowResize() {
+            // Update camera aspect ratio and renderer size on window resize
+            this.camera.aspect = window.innerWidth / window.innerHeight;
+            this.camera.updateProjectionMatrix();
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+    }
 };
 </script>
+
