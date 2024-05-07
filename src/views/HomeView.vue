@@ -1,4 +1,4 @@
-<template>
+<template><br>
   <v-container>
     <h1>Homepage</h1>
     <v-row>
