@@ -83,23 +83,18 @@ export default {
         addMarker(longitude, latitude, markerSize = 0.05) {
             // Only proceed if longitude and latitude are not null
             if (longitude !== null && latitude !== null) {
+                
+                // Calculate marker position
+                const phi = (90 - latitude) * (Math.PI / 180);
+                const theta = (longitude + 180) * (Math.PI / 180);
+                const x = -this.earthRadius * Math.sin(phi) * Math.cos(theta);
+                const y = this.earthRadius * Math.cos(phi);
+                const z = this.earthRadius * Math.sin(phi) * Math.sin(theta);
+
                 // Create a marker
                 const geometry = new THREE.SphereGeometry(markerSize, 32, 32);
                 const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
                 const marker = new THREE.Mesh(geometry, material);
-
-                const preciseLatitude = parseFloat(latitude.toFixed(6));
-                const preciseLongitude = parseFloat(longitude.toFixed(6));
-
-                // Convert latitude and longitude to radians
-                const latRad = preciseLatitude * Math.PI / 180;
-                const lonRad = preciseLongitude * Math.PI / 180;
-
-                // Use the Haversine formula to calculate the x, y, and z coordinates
-                const x = this.earthRadius * Math.cos(latRad) * Math.cos(lonRad);
-                const y = this.earthRadius * Math.cos(latRad) * Math.sin(lonRad);
-                const z = this.earthRadius * Math.sin(latRad);
-
                 marker.position.set(x, y, z);
 
                 // Add the marker to the scene
