@@ -69,7 +69,7 @@ export default {
       if (radio.playing) {
         this.pauseRadio(radio);
       } else {
-        this.pauseAllRadios(); // Pause all other radios
+        this.pauseAllRadios(); 
         this.playRadio(radio);
       }
     },

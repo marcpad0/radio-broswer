@@ -48,7 +48,7 @@ export default {
       const data = await response.json();
       const allRadios = data.filter(radio => radio.countrycode === 'IT').map(radio => ({
         ...radio,
-        favorite: true, // Set favorite to true by default
+        favorite: true, 
         showControls: false,
         playing: false,
         audioPlayer: new Audio(),
@@ -68,7 +68,7 @@ export default {
       if (radio.playing) {
         this.pauseRadio(radio);
       } else {
-        this.pauseAllRadios(); // Pause all other radios
+        this.pauseAllRadios(); 
         this.playRadio(radio);
       }
     },
@@ -115,7 +115,7 @@ export default {
       let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
       favorites = favorites.filter(fav => fav.changeuuid !== radio.changeuuid);
       localStorage.setItem('favorites', JSON.stringify(favorites));
-      this.getFavoriteRadios(); // Refresh favorite radios list after removing favorite
+      this.getFavoriteRadios(); 
     },
     showControls(radio) {
       radio.showControls = true;
